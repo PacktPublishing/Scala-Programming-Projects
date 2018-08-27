@@ -40,6 +40,23 @@ covariantAnimalDecoder.decode("Cat(Ulysse)")
 implicitly[CovariantDecoder[Cat] <:< CovariantDecoder[Animal]]
 
 
+
+object CovariantCatAndDogDecoder extends CovariantDecoder[Animal] {
+  val CatRegex = """Cat\((\w+\))""".r
+  val DogRegex = """Dog\((\w+\))""".r
+  def decode(s: String): Option[Animal] = s match {
+    case CatRegex(name) => Some(Cat(name))
+    case DogRegex(name) => Some(Dog(name))
+    case _ => None
+  }
+}
+
+val covariantCatsAndDogsDecoder = CovariantCatAndDogDecoder
+
+covariantCatsAndDogsDecoder.decode("Cat(Garfield)")
+covariantCatsAndDogsDecoder.decode("Dog(Aiko)")
+
+
 // Contravariant Encoder
 trait Encoder[-A] {
   def encode(a: A): String
@@ -61,7 +78,27 @@ Error:(55, 15) covariant type A occurs in contravariant position in type A of va
 def encode(a: A): String
      ^
 */
+trait Codec[A] {
+  def encode(a: A): String
+  def decode(s: String): Option[A]
+}
 
+object CatAndDogCodec extends Codec[Animal] {
+  val CatRegex = """Cat\((\w+\))""".r
+  val DogRegex = """Dog\((\w+\))""".r
+
+  override def encode(a: Animal) = a.toString
+
+  override def decode(s: String): Option[Animal] = s match {
+    case CatRegex(name) => Some(Cat(name))
+    case DogRegex(name) => Some(Dog(name))
+    case _ => None
+  }
+}
+
+val cat = CatAndDogCodec.decode("Cat(Garfield)")
+
+CatAndDogCodec.encode(cat.get)
 
 
 // Covariance in collections
