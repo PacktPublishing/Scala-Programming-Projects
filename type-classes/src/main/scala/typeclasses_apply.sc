@@ -47,4 +47,3 @@ val fc = Option(3)
 val fab: Option[Int => String] = Option(_.toString)
 val fbc: Option[String => Double] = Option(_.toDouble / 2)
 (fbc <*> (fab <*> fa)) == ((fbc.map(_.compose[Int] _) <*> fab) <*> fa)
-
