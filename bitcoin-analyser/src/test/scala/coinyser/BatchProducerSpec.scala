@@ -86,7 +86,7 @@ class BatchProducerSpec extends WordSpec with Matchers with BeforeAndAfterAll wi
 
 
   "BatchProducer.processOneBatch" should {
-    "Wait a bit of time, fetch the next batch of transactions, and save a filtered union of the previous and the last batch" in {
+    "fetch the next batch of transactions, wait a bit of time and save a filtered union of the previous and the last batch" in {
       // TODO timezone
       val transactions = Seq(
         "|2018-08-02 07:22:34|71319732|7657.58|true |0.021762  |",

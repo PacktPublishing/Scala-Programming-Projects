@@ -19,7 +19,7 @@ class AppContext(implicit val config: AppConfig,
 
 object BatchProducer {
   /** Maximum time required to read transactions from the API */
-  val MaxReadTime: FiniteDuration = 15.seconds
+  val MaxReadTime: FiniteDuration = 1.minute
   /** Number of seconds required by the API to make a transaction visible */
   val ApiLag: FiniteDuration = 5.seconds
 
@@ -40,32 +40,22 @@ object BatchProducer {
     } yield ()
   }
 
-  def processOneBatch(lastTransactionsIO: IO[Dataset[Transaction]],
+  def processOneBatch(fetchNextTransactions: IO[Dataset[Transaction]],
                       transactions: Dataset[Transaction],
                       saveStart: Instant,
                       saveEnd: Instant)(implicit appCtx: AppContext)
   : IO[(Dataset[Transaction], Instant, Instant)] = {
     import appCtx._
-    import spark.implicits._
 
-    println("saveStart : " + saveStart)
-    println("saveEnd   : " + saveEnd)
-    val firstTxs = filterTxs(transactions, saveStart, saveEnd)
+    val transactionsToSave = filterTxs(transactions, saveStart, saveEnd)
     for {
-      _ <- BatchProducer.save(firstTxs, appCtx.config.transactionStorePath)
+      _ <- BatchProducer.save(transactionsToSave, appCtx.config.transactionStorePath)
       _ <- IO.sleep(config.intervalBetweenReads - MaxReadTime)
 
       beforeRead <- currentInstant
       // We are sure that lastTransactions contain all transactions until end
       end = beforeRead.minusSeconds(ApiLag.toSeconds)
-      nextTransactions <- lastTransactionsIO
-      _ <- IO {
-        // TODO use logger
-        println("end        : " + end)
-        println("beforeRead : " + beforeRead)
-        println(nextTransactions.map(_.tid).collect().toSet)
-      }
-
+      nextTransactions <- fetchNextTransactions
     } yield (nextTransactions, saveEnd, end)
   }
 
