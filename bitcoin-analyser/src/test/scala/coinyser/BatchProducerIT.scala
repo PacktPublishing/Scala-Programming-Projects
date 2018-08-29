@@ -1,14 +1,12 @@
 package coinyser
 
-import java.io.File
 import java.sql.Timestamp
-import java.time.{Instant, LocalDateTime, OffsetDateTime}
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import cats.effect.{IO, Timer}
 import org.apache.spark.sql.test.SharedSparkSession
-import org.scalatest.{Assertion, Matchers, WordSpec}
-import BatchProducerIT._
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -34,38 +32,38 @@ class BatchProducerIT extends WordSpec with Matchers with SharedSparkSession {
 
   "BatchProducer.processOneBatch" should {
     "filter and save a batch of transaction, wait 59 mn, fetch the next batch" in withTempDir { tmpDir =>
-      implicit val fakeTimer: FakeTimer = new FakeTimer
-      // TODO rename to BatchAppConfig, remove kafka stuff, remove intervals (hardcode them)
-      import scala.concurrent.duration._
-      implicit val appConfig: AppConfig = AppConfig(
-        topic = "transaction_btcusd",
-        bootstrapServers = "localhost:9092",
-        transactionStorePath = tmpDir.toURI,
-        firstInterval = 1.day,
-        intervalBetweenReads = 1.hour
-      )
-      implicit val appContext: AppContext = new AppContext
+      implicit object FakeTimer extends Timer[IO] {
+        private var clockRealTimeInMillis: Long = Instant.parse("2018-08-02T01:00:00Z").toEpochMilli
 
+        def clockRealTime(unit: TimeUnit): IO[Long] =
+          IO(unit.convert(clockRealTimeInMillis, TimeUnit.MILLISECONDS))
 
-      val transactions = Seq(
-        ("2018-08-01T23:00:00Z", 1, 7657.58, true, 0.021762),
-        ("2018-08-02T01:00:00Z", 2, 7663.85, false, 0.01385517),
-        ("2018-08-02T01:58:30Z", 3, 7663.85, false, 0.03782426),
-        ("2018-08-02T01:58:59Z", 4, 7663.86, false, 0.15750809),
-        ("2018-08-02T02:30:00Z", 5, 7661.49, true, 0.1)
-      ).map(parseTransaction)
+        def sleep(duration: FiniteDuration): IO[Unit] = IO {
+          clockRealTimeInMillis = clockRealTimeInMillis + duration.toMillis
+        }
 
-      // Start at 01:00, tx 2 ignored (too soon)
-      val txs0 = transactions.filter(tx => tx.tid <= 1)
+        def shift: IO[Unit] = ???
+
+        def clockMonotonic(unit: TimeUnit): IO[Long] = ???
+      }
+      implicit val appContext: AppContext = new AppContext(transactionStorePath = tmpDir.toURI)
+
+      implicit def toTimestamp(str: String): Timestamp = Timestamp.from(Instant.parse(str))
+      val tx1 = Transaction("2018-08-01T23:00:00Z", 1, 7657.58, true, 0.021762)
+      val tx2 = Transaction("2018-08-02T01:00:00Z", 2, 7663.85, false, 0.01385517)
+      val tx3 = Transaction("2018-08-02T01:58:30Z", 3, 7663.85, false, 0.03782426)
+      val tx4 = Transaction("2018-08-02T01:58:59Z", 4, 7663.86, false, 0.15750809)
+      val tx5 = Transaction("2018-08-02T02:30:00Z", 5, 7661.49, true, 0.1)
+
+     // Start at 01:00, tx 2 ignored (too soon)
+      val txs0 = Seq(tx1)
       // Fetch at 01:59, get nb 2 and 3, but will miss nb 4 because of Api lag
-      val txs1 = transactions.filter(tx => tx.tid >= 2 && tx.tid <= 3)
+      val txs1 = Seq(tx2, tx3)
       // Fetch at 02:58, get nb 3, 4, 5
-      val txs2 = transactions.filter(tx => tx.tid >= 3 && tx.tid <= 5)
+      val txs2 = Seq(tx3, tx4, tx5)
       // Fetch at 03:57, get nothing
       val txs3 = Seq.empty[Transaction]
 
-      val initialClock = Instant.parse("2018-08-02T01:00:00Z").toEpochMilli
-      fakeTimer.clockRealTimeInMillis = initialClock
       val start0 = Instant.parse("2018-08-02T00:00:00Z")
       val end0 = Instant.parse("2018-08-02T00:59:55Z")
       val threeBatchesIO =
@@ -88,37 +86,16 @@ class BatchProducerIT extends WordSpec with Matchers with SharedSparkSession {
       start2 should ===(end1)
       end2 should ===(Instant.parse("2018-08-02T02:57:55Z")) // initialClock + 1mn -15s + 1mn -15s -5s = end1 + 45s
 
+      val lastClock = Instant.ofEpochMilli(
+        FakeTimer.clockRealTime(TimeUnit.MILLISECONDS).unsafeRunSync())
+      lastClock should === (Instant.parse("2018-08-02T03:57:00Z"))
+
       val savedTransactions = spark.read.parquet(tmpDir.toString).as[Transaction].collect()
-      val expectedTxs = transactions.filter(tx => tx.tid >= 2)
-      // We do not use .toSet to make sure we don't have duplicates
-      savedTransactions.map(_.tid).sorted should contain theSameElementsAs expectedTxs.map(_.tid).sorted
+      val expectedTxs = Seq(tx2, tx3, tx4, tx5)
+      savedTransactions should contain theSameElementsAs expectedTxs
     }
   }
 
 
 }
-
-object BatchProducerIT {
-  def parseTransaction(tx: (String, Int, Double, Boolean, Double)): Transaction = tx match {
-    case (date, tid, price, sell, amount) =>
-      Transaction(Timestamp.from(Instant.parse(date)), tid, price, sell, amount)
-  }
-
-  class FakeTimer extends Timer[IO] {
-    var clockRealTimeInMillis = 0L
-
-    def clockRealTime(unit: TimeUnit): IO[Long] =
-      IO(unit.convert(clockRealTimeInMillis, TimeUnit.MILLISECONDS))
-
-    def clockMonotonic(unit: TimeUnit): IO[Long] = ???
-
-    def sleep(duration: FiniteDuration): IO[Unit] = IO {
-      clockRealTimeInMillis = clockRealTimeInMillis + duration.toMillis
-    }
-
-    def shift: IO[Unit] = ???
-  }
-
-}
-
 

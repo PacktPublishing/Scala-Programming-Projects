@@ -13,13 +13,12 @@ import org.apache.spark.sql.{Dataset, SaveMode, SparkSession, TypedColumn}
 
 import scala.concurrent.duration._
 
-class AppContext(implicit val config: AppConfig,
-                 implicit val spark: SparkSession,
+class AppContext(val transactionStorePath: URI)
+                (implicit val spark: SparkSession,
                  implicit val timer: Timer[IO])
 
 object BatchProducer {
-  /** Maximum time required to read transactions from the API */
-  val MaxReadTime: FiniteDuration = 1.minute
+  val WaitTime: FiniteDuration = 59.minute
   /** Number of seconds required by the API to make a transaction visible */
   val ApiLag: FiniteDuration = 5.seconds
 
@@ -32,7 +31,7 @@ object BatchProducer {
       beforeRead <- currentInstant
       firstEnd = beforeRead.minusSeconds(ApiLag.toSeconds)
       firstTxs <- readTransactions(initialJsonTxs)
-      firstStart = truncateInstant(firstEnd, config.firstInterval)
+      firstStart = truncateInstant(firstEnd, 1.day)
       _ <- Monad[IO].tailRecM((firstTxs, firstStart, firstEnd)) {
         case (txs, start, instant) =>
           processOneBatch(readTransactions(jsonTxs), txs, start, instant).map(_.asLeft)
@@ -49,8 +48,8 @@ object BatchProducer {
 
     val transactionsToSave = filterTxs(transactions, saveStart, saveEnd)
     for {
-      _ <- BatchProducer.save(transactionsToSave, appCtx.config.transactionStorePath)
-      _ <- IO.sleep(config.intervalBetweenReads - MaxReadTime)
+      _ <- BatchProducer.save(transactionsToSave, appCtx.transactionStorePath)
+      _ <- IO.sleep(WaitTime)
 
       beforeRead <- currentInstant
       // We are sure that lastTransactions contain all transactions until end
@@ -99,11 +98,9 @@ object BatchProducer {
   def filterTxs(transactions: Dataset[Transaction], fromInstant: Instant, untilInstant: Instant)
   : Dataset[Transaction] = {
     import transactions.sparkSession.implicits._
-    val filtered = transactions.filter(
+    transactions.filter(
       ($"timestamp" >= lit(fromInstant.getEpochSecond).cast(TimestampType)) &&
         ($"timestamp" < lit(untilInstant.getEpochSecond).cast(TimestampType)))
-    println(s"filtered ${filtered.count()}/${transactions.count()} from $fromInstant until $untilInstant")
-    filtered
   }
 
   def unsafeSave(transactions: Dataset[Transaction], path: URI): Unit =
