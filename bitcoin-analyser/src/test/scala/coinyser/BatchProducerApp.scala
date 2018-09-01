@@ -17,7 +17,7 @@ object BatchProducerApp extends App {
   implicit val appConfig: AppConfig = AppConfig(
     topic = "transaction_btcusd",
     bootstrapServers = "localhost:9092",
-    transactionStorePath = new URI("/home/mikael/projects/scala-fundamentals/bitcoin-analyser/data/transactions2/currency_pair=btcusd"),
+    transactionStorePath = new java.io.File("./data/transactions2/currency_pair=btcusd").toURI,
     firstInterval = 1.day,
     intervalBetweenReads = 1.hour
   )
