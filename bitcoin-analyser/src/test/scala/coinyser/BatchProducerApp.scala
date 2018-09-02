@@ -2,15 +2,13 @@ package coinyser
 
 import java.net.{URI, URL}
 
-import cats.effect.IO
+import cats.effect.{ExitCode, IO, IOApp}
+import com.typesafe.scalalogging.StrictLogging
 import org.apache.spark.sql.SparkSession
 
-import scala.concurrent.duration._
 import scala.io.Source
-import scala.concurrent.ExecutionContext.Implicits.global
 
-// TODO use IOApp
-object BatchProducerApp extends App {
+object BatchProducerApp extends IOApp with StrictLogging {
 
   implicit val spark: SparkSession = SparkSession
     .builder
@@ -22,12 +20,18 @@ object BatchProducerApp extends App {
     // In Prod, use a distributed filesystem
     new URI("/home/mikael/projects/scala-fundamentals/bitcoin-analyser/data/transactions2/currency_pair=btcusd"))
 
-  val initialJsonTxs = IO {
-    Source.fromURL(new URL("https://www.bitstamp.net/api/v2/transactions/btcusd/?time=day")).mkString
+  def jsonIO(params: String): IO[String] = {
+    val url = new URL("https://www.bitstamp.net/api/v2/transactions/btcusd" + params)
+    IO {
+      logger.info(s"calling $url")
+      Source.fromURL(url).mkString
+    }
   }
 
-  val nextJsonTxs = IO {
-    Source.fromURL(new URL("https://www.bitstamp.net/api/v2/transactions/btcusd/?time=hour")).mkString
-  }
-  BatchProducer.processRepeatedly(initialJsonTxs, nextJsonTxs).unsafeRunSync()
+  val initialJsonTxs: IO[String] = jsonIO("?time=day")
+  val nextJsonTxs: IO[String] = jsonIO("?time=hour")
+
+  def run(args: List[String]): IO[ExitCode] =
+    BatchProducer.processRepeatedly(initialJsonTxs, nextJsonTxs).map(_ => ExitCode.Success)
+
 }

@@ -2,6 +2,7 @@ package coinyser
 
 import java.net.URI
 import java.time.Instant
+import java.util.Scanner
 import java.util.concurrent.TimeUnit
 
 import cats.Monad
@@ -67,6 +68,21 @@ object BatchProducer {
     Instant.ofEpochSecond(instant.getEpochSecond / interval.toSeconds * interval.toSeconds)
 
   }
+
+  def jsonStreamToHttpTransactions(ioReadable: IO[Readable])(implicit spark: SparkSession): IO[Dataset[HttpTransaction]] = {
+    import spark.implicits._
+    import scala.collection.JavaConversions._
+    val txSchema: StructType = Seq.empty[HttpTransaction].toDS().schema
+    for {
+      readable <- ioReadable
+      scanner = new Scanner(readable).useDelimiter("\\[|\\},\\]?")
+      ds <- IO(scanner.toSeq.toDS().map(_ + "}"))
+    } yield
+      ds.select(from_json($"value", txSchema).alias("v"))
+        .select("v.*")
+        .as[HttpTransaction]
+  }
+
 
   def jsonToHttpTransactions(json: String)(implicit spark: SparkSession): Dataset[HttpTransaction] = {
     import spark.implicits._

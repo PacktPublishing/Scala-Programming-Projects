@@ -6,6 +6,7 @@ scalaVersion := "2.11.11"
 val sparkVersion = "2.3.1"
 
 libraryDependencies ++= Seq(
+  "org.lz4" % "lz4-java" % "1.4.0",
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-core" % sparkVersion % Test classifier "tests",
   "org.apache.spark" %% "spark-core" % sparkVersion % Test classifier "test-sources",
@@ -14,7 +15,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql" % sparkVersion % Test classifier "test-sources",
   "org.apache.spark" %% "spark-catalyst" % sparkVersion % Test classifier "tests",
   "org.apache.spark" %% "spark-catalyst" % sparkVersion % Test classifier "test-sources",
-  "org.lz4" % "lz4-java" % "1.4.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
   "org.scalatest" %% "scalatest" % "3.0.4" % "test",
   "org.typelevel" %% "cats-core" % "1.1.0",
   "org.typelevel" %% "cats-effect" % "1.0.0-RC2",
