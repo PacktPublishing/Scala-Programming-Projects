@@ -1,0 +1,29 @@
+@(title: String)
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+
+            <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div id="productPanel" class="col-8">
+                    <div id="products" class="row">
+
+                    </div>
+                </div>
+
+                <div id="cartPanel" class="col-4"></div>
+            </div>
+        </div>
+
+        @scalajs.html.scripts("client", routes.Assets.versioned(_).toString, name => getClass.getResource(s"/public/$name") != null)
+    </body>
+</html>
+

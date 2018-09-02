@@ -1,0 +1,29 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET           /                                               controllers.Application.index
+
+# Login
+POST          /v1/login                                       controllers.WebServices.login
+
+# Product API
+GET           /v1/products                                    controllers.WebServices.listProduct
+POST          /v1/products/add                                controllers.WebServices.addProduct
+
+# Cart API
+POST          /v1/cart/products/:id/quantity/:quantity        controllers.WebServices.addCartProduct(id,quantity)
+GET           /v1/cart/products                               controllers.WebServices.listCartProducts()
+DELETE        /v1/cart/products/:id                           controllers.WebServices.deleteCartProduct(id)
+PUT           /v1/cart/products/:id/quantity/:quantity        controllers.WebServices.updateCartProduct(id,quantity)
+
+GET           /assets/*file                                   controllers.Assets.versioned(path="/public", file: Asset)
+
+GET           /v1/swagger.json                                controllers.ApiHelpController.getResources
+
+GET           /docs/swagger-ui/*file                          controllers.Assets.at(path:String="/public/lib/swagger-ui", file:String)
+
+# Websocket
+
+GET           /v1/cart/events                                 controllers.WebSockets.cartEventWS
