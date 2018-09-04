@@ -10,15 +10,8 @@ import scala.io.Source
 
 object BatchProducerApp extends IOApp with StrictLogging {
 
-  implicit val spark: SparkSession = SparkSession
-    .builder
-    .master("local[*]")
-    .appName("coinyser")
-    .getOrCreate()
-
-  implicit val appContext: AppContext = new AppContext(transactionStorePath =
-    // In Prod, use a distributed filesystem
-    new URI("/home/mikael/projects/scala-fundamentals/bitcoin-analyser/data/transactions2/currency_pair=btcusd"))
+  implicit val spark: SparkSession = SparkSession.builder.master("local[*]").getOrCreate()
+  implicit val appContext: AppContext = new AppContext(new URI("./data/transactions"))
 
   def jsonIO(params: String): IO[String] = {
     val url = new URL("https://www.bitstamp.net/api/v2/transactions/btcusd" + params)
