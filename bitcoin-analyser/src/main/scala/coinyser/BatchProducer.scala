@@ -1,5 +1,6 @@
 package coinyser
 
+import java.io.Reader
 import java.net.URI
 import java.time.Instant
 import java.util.Scanner
@@ -24,18 +25,18 @@ object BatchProducer {
   val ApiLag: FiniteDuration = 5.seconds
 
 
-  def processRepeatedly(initialJsonTxs: IO[String], jsonTxs: IO[String])
+  def processRepeatedly(initialJsonTxs: IO[Dataset[Transaction]], jsonTxs: IO[Dataset[Transaction]])
                        (implicit appContext: AppContext): IO[Unit] = {
     import appContext._
 
     for {
       beforeRead <- currentInstant
       firstEnd = beforeRead.minusSeconds(ApiLag.toSeconds)
-      firstTxs <- readTransactions(initialJsonTxs)
+      firstTxs <- initialJsonTxs
       firstStart = truncateInstant(firstEnd, 1.day)
       _ <- Monad[IO].tailRecM((firstTxs, firstStart, firstEnd)) {
         case (txs, start, instant) =>
-          processOneBatch(readTransactions(jsonTxs), txs, start, instant).map(_.asLeft)
+          processOneBatch(jsonTxs, txs, start, instant).map(_.asLeft)
       }
     } yield ()
   }
@@ -69,7 +70,14 @@ object BatchProducer {
 
   }
 
-  def jsonStreamToHttpTransactions(ioReadable: IO[Readable])(implicit spark: SparkSession): IO[Dataset[HttpTransaction]] = {
+  /** Uses a java.io.Readable to avoid reading the whole HTTP Response in one go in a String
+    * This is more efficient:
+    * - it can read a huge payload in a streaming fashion without running out of memory.
+    * - when converting to Dataset, it will send the data to different executors and
+    *   therefore it will parallelize the rest of the processing
+    * The json array is cut using a Scanner and a regular expression to remove the [] and the ,
+    */
+  def optimizedJsonToHttpTransactions(ioReadable: IO[Readable])(implicit spark: SparkSession): IO[Dataset[HttpTransaction]] = {
     import spark.implicits._
     import scala.collection.JavaConversions._
     val txSchema: StructType = Seq.empty[HttpTransaction].toDS().schema
@@ -110,6 +118,11 @@ object BatchProducer {
   def readTransactions(jsonTxs: IO[String])(implicit spark: SparkSession): IO[Dataset[Transaction]] = {
     jsonTxs.map(json => httpToDomainTransactions(jsonToHttpTransactions(json)))
   }
+
+  def optimizedReadTransactions(jsonTxs: IO[Readable])(implicit spark: SparkSession): IO[Dataset[Transaction]] =
+    optimizedJsonToHttpTransactions(jsonTxs) map httpToDomainTransactions
+
+
 
   def filterTxs(transactions: Dataset[Transaction], fromInstant: Instant, untilInstant: Instant)
   : Dataset[Transaction] = {
