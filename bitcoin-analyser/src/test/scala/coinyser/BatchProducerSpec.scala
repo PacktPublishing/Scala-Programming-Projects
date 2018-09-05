@@ -26,19 +26,6 @@ class BatchProducerSpec extends WordSpec with Matchers with SharedSparkSession {
     }
   }
 
-  "BatchProducer.optimizedJsonToHttpTransactions" should {
-    "create a IO[Dataset[HttpTransaction]] from a Json obtained from IO[Reader]" in {
-      val json =
-        """[{"date": "1532365695", "tid": "70683282", "price": "7740.00", "type": "0", "amount": "0.10041719"},
-          |{"date": "1532365693", "tid": "70683281", "price": "7739.99", "type": "0", "amount": "0.00148564"}]""".stripMargin
-
-      val stream = IO(new StringReader(json))
-      val ds: Dataset[HttpTransaction] = BatchProducer.optimizedJsonToHttpTransactions(stream).unsafeRunSync()
-      ds.collect() should contain theSameElementsAs Seq(httpTransaction1, httpTransaction2)
-    }
-  }
-
-
   "BatchProducer.httpToDomainTransactions" should {
     "transform a Dataset[HttpTransaction] into a Dataset[Transaction]" in {
       import testImplicits._

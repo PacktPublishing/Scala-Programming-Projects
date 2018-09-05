@@ -1,6 +1,5 @@
 package coinyser
 
-import java.io.Reader
 import java.net.URI
 import java.time.Instant
 import java.util.Scanner
@@ -11,7 +10,7 @@ import cats.effect.{IO, Timer}
 import cats.implicits._
 import org.apache.spark.sql.functions.{explode, from_json, lit}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Dataset, SaveMode, SparkSession, TypedColumn}
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 
 import scala.concurrent.duration._
 
@@ -70,32 +69,10 @@ object BatchProducer {
 
   }
 
-  /** Uses a java.io.Readable to avoid reading the whole HTTP Response in one go in a String
-    * This is more efficient:
-    * - it can read a huge payload in a streaming fashion without running out of memory.
-    * - when converting to Dataset, it will send the data to different executors and
-    *   therefore it will parallelize the rest of the processing
-    * The json array is cut using a Scanner and a regular expression to remove the [] and the ,
-    */
-  def optimizedJsonToHttpTransactions(ioReadable: IO[Readable])(implicit spark: SparkSession): IO[Dataset[HttpTransaction]] = {
-    import spark.implicits._
-    import scala.collection.JavaConversions._
-    val txSchema: StructType = Seq.empty[HttpTransaction].toDS().schema
-    for {
-      readable <- ioReadable
-      scanner = new Scanner(readable).useDelimiter("\\[|\\},\\]?")
-      ds <- IO(scanner.toSeq.toDS().map(_ + "}"))
-    } yield
-      ds.select(from_json($"value", txSchema).alias("v"))
-        .select("v.*")
-        .as[HttpTransaction]
-  }
-
-
   def jsonToHttpTransactions(json: String)(implicit spark: SparkSession): Dataset[HttpTransaction] = {
     import spark.implicits._
     val ds: Dataset[String] = Seq(json).toDS()
-    val txSchema: StructType = Seq.empty[HttpTransaction].toDS().schema
+    val txSchema: StructType = spark.emptyDataset[HttpTransaction].schema
     val schema = ArrayType(txSchema)
     val arrayColumn = from_json($"value", schema)
     ds.select(explode(arrayColumn).alias("v"))
@@ -119,8 +96,6 @@ object BatchProducer {
     jsonTxs.map(json => httpToDomainTransactions(jsonToHttpTransactions(json)))
   }
 
-  def optimizedReadTransactions(jsonTxs: IO[Readable])(implicit spark: SparkSession): IO[Dataset[Transaction]] =
-    optimizedJsonToHttpTransactions(jsonTxs) map httpToDomainTransactions
 
 
 

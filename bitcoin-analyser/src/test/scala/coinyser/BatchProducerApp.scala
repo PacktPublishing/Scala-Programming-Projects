@@ -1,9 +1,9 @@
 package coinyser
 
-import java.io.{BufferedReader, InputStreamReader}
 import java.net.{URI, URL}
 
 import cats.effect.{ExitCode, IO, IOApp}
+import coinyser.BatchProducer.{httpToDomainTransactions, jsonToHttpTransactions}
 import com.typesafe.scalalogging.StrictLogging
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -23,28 +23,11 @@ object BatchProducerApp extends IOApp with StrictLogging {
       logger.info(s"calling $url")
       Source.fromURL(url).mkString
     }
-    BatchProducer.readTransactions(jsonIO)
+    jsonIO.map(json => httpToDomainTransactions(jsonToHttpTransactions(json)))
   }
 
-
-  def optimizedTransactionsIO(timeParam: String): IO[Dataset[Transaction]] = {
-    val url = bitstampUrl(timeParam)
-    val jsonIO = IO {
-      logger.info(s"calling $url")
-      new BufferedReader(new InputStreamReader(url.openStream()))
-    }
-    BatchProducer.optimizedReadTransactions(jsonIO)
-  }
-
-
-  // If you want to use the optimized JSON reading,
-  // comment the next two lines, and uncomment the next two.
-  // You should see that the parquet files are split in more parts when using the optimized version,
-  // which indicates that we achieved a better parallelism
   val initialJsonTxs: IO[Dataset[Transaction]] = transactionsIO("day")
   val nextJsonTxs: IO[Dataset[Transaction]] = transactionsIO("hour")
-//  val initialJsonTxs: IO[Dataset[Transaction]] = optimizedTransactionsIO("day")
-//  val nextJsonTxs: IO[Dataset[Transaction]] = optimizedTransactionsIO("hour")
 
   def run(args: List[String]): IO[ExitCode] =
     BatchProducer.processRepeatedly(initialJsonTxs, nextJsonTxs).map(_ => ExitCode.Success)
