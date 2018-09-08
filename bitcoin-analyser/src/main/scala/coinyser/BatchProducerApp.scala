@@ -9,7 +9,7 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 
 import scala.io.Source
 
-object BatchProducerApp extends IOApp with StrictLogging {
+class BatchProducerApp extends IOApp with StrictLogging {
 
   implicit val spark: SparkSession = SparkSession.builder.master("local[*]").getOrCreate()
   implicit val appContext: AppContext = new AppContext(new URI("./data/transactions"))
@@ -33,3 +33,5 @@ object BatchProducerApp extends IOApp with StrictLogging {
     BatchProducer.processRepeatedly(initialJsonTxs, nextJsonTxs).map(_ => ExitCode.Success)
 
 }
+
+object BatchProducerApp extends BatchProducerApp
