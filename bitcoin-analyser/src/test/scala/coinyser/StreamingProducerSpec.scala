@@ -6,6 +6,7 @@ import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.{BeforeAndAfterAll, EitherValues, Matchers, WordSpec}
 import org.scalatest.concurrent.Eventually
 import StreamingProducerSpec._
+import scala.concurrent.duration._
 
 class StreamingProducerSpec extends WordSpec with Matchers with BeforeAndAfterAll with TypeCheckedTripleEquals with Eventually with EitherValues {
 
@@ -28,7 +29,16 @@ class StreamingProducerSpec extends WordSpec with Matchers with BeforeAndAfterAl
     }
   }
 
-  // TODO test subscribe with a mocked pusher
+  "StreamingProducer.subscribe" should {
+    "register a callback that receives live trades" in {
+      val pusher = new FakePusher(Vector("a", "b", "c"))
+      var receivedTrades = Vector.empty[String]
+      val io = StreamingProducer.subscribe(pusher) { trade => receivedTrades = receivedTrades :+ trade }
+      io.unsafeRunSync()
+      receivedTrades should === (Vector("a", "b", "c"))
+    }
+  }
+
 
   // TODO use EmbeddedKafka to test the production / consumption ?
 }
