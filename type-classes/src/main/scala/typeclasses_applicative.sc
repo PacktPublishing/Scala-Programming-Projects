@@ -1,7 +1,6 @@
 import cats.Applicative
 import cats.data.{Validated, ValidatedNel}
 import cats.implicits._
-import cats.kernel.Monoid
 
 Applicative[Option].pure(1)
 // res0: Option[Int] = Some(1)
@@ -25,24 +24,24 @@ val id = (identity[Int] _)
 Applicative[F].pure(id) <*> fa == fa
 
 // Laws: Composition
+type B = String
+type C = Double
 // pure (.) <*> u <*> v <*> w = u <*> (v <*> w)
-val fab: Option[Int => String] = Option(_.toString)
-val fbc: Option[String => Double] = Option(_.toDouble / 2)
+val fab: F[A => B] = Option(_.toString)
+val fbc: F[B => C] = Option(_.toDouble / 2)
 (fbc <*> (fab <*> fa)) == ((fbc.map(_.compose[A] _) <*> fab) <*> fa)
 
 // Laws: Homomorphism
 // pure f <*> pure x = pure (f x)
 val a = 1
-type B = String
-type FAB = (A) => B
-
-val f : FAB = _.toString
+type AB = (A) => B
+val f : AB = _.toString
 
 Applicative[F].pure(f) <*> Applicative[F].pure(a) == Applicative[F].pure(f(a))
 
 // Laws: Interchange
 // u <*> pure y = pure ($ y) <*> u
-fab <*> Applicative[F].pure(a) == Applicative[F].pure((f: FAB) => f(a)) <*> fab
+fab <*> Applicative[F].pure(a) == Applicative[F].pure((f: A => B) => f(a)) <*> fab
 
 // Traverse
 def parseIntO(s: String): Option[Int] = Either.catchNonFatal(s.toInt).toOption

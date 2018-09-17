@@ -8,6 +8,7 @@ addOne(Option(1))
 // res1: Option[Int] = Some(2)
 addOne(1.asRight)
 // res2: Either[Nothing,Int] = Right(2)
+addOne[cats.Id](1)
 
 // Exercise
 val brokenFunctor: Functor[Vector] = new Functor[Vector] {
