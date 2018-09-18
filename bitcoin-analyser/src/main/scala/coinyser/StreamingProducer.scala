@@ -5,15 +5,14 @@ import java.text.SimpleDateFormat
 import java.util.TimeZone
 
 import cats.effect.IO
-import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.pusher.client.{Client, Pusher}
+import com.pusher.client.{Client}
 import com.pusher.client.channel.SubscriptionEventListener
-import com.pusher.client.connection.{ConnectionEventListener, ConnectionState, ConnectionStateChange}
+import com.typesafe.scalalogging.StrictLogging
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
-object StreamingProducer {
+object StreamingProducer extends StrictLogging {
   def convertWsTransaction(wsTx: WebsocketTransaction): Transaction =
     Transaction(
       timestamp = new Timestamp(wsTx.timestamp.toLong * 1000),
@@ -49,8 +48,7 @@ object StreamingProducer {
 
       _ <- IO(channel.bind("trade", new SubscriptionEventListener() {
         override def onEvent(channel: String, event: String, data: String): Unit = {
-          // TODO use logging
-          println(s"Received event: $event with data: $data")
+          logger.info(s"Received event: $event with data: $data")
           onTradeReceived(data)
         }
       }))

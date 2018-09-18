@@ -9,7 +9,7 @@ def createPerson(description: String): Person = {
   val split = description.split(" ")
   val age = split(1).toInt
   if (age < 0)
-    throw AgeNegativeException("age should be > 0")
+    throw AgeNegativeException(s"age: $age should be > 0")
   else
     Person(split(0), age)
 }
