@@ -8,7 +8,7 @@ val f2 = Future {2}
 val f3 = Future {3}
 
 
-val res0 = for {
+val s = for {
   v1 <- f1
   v2 <- f2
   v3 <- f3
