@@ -24,7 +24,7 @@ case class CartLine(qty: Int, product: Product) {
     div(`class` := "col")(getPriceLabel)
   ).render
 
-  private def getQuantityInput = input(id := s"cart-${product.code}-qty", onchange := changeQty, value := qty.toString, `type` := "text", style := "width: 100%;").render
+  private def getQuantityInput =  input(id := s"cart-${product.code}-qty", onchange := changeQty, value := qty.toString, `type` := "text", style := "width: 100%;").render
 
   private def getProductLabel = label(product.name).render
 
