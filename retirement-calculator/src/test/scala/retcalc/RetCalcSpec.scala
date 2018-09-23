@@ -11,15 +11,17 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals
   "RetCalc.futureCapital" should {
     "calculate the amount of savings I will have in n months" in {
       // Excel =-FV(0.04/12,25*12,1000,10000,0)
-      val actual = RetCalc.futureCapital(FixedReturns(0.04), nbOfMonths = 25 * 12,
-        netIncome = 3000, currentExpenses = 2000, initialCapital = 10000).right.value
+      val actual = RetCalc.futureCapital(FixedReturns(0.04),
+        nbOfMonths = 25 * 12, netIncome = 3000,
+        currentExpenses = 2000, initialCapital = 10000).right.value
       val expected = 541267.1990
       actual should ===(expected)
     }
 
     "calculate how much savings will be left after having taken a pension for n months" in {
-      val actual = RetCalc.futureCapital(FixedReturns(0.04), nbOfMonths = 40 * 12,
-        netIncome = 0, currentExpenses = 2000, initialCapital = 541267.198962).right.value
+      val actual = RetCalc.futureCapital(FixedReturns(0.04),
+        nbOfMonths = 40 * 12, netIncome = 0, currentExpenses = 2000,
+        initialCapital = 541267.198962).right.value
       val expected = 309867.5316
       actual should ===(expected)
     }
