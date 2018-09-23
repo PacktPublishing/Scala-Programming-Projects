@@ -65,63 +65,77 @@ class APISpec extends PlaySpec with ScalaFutures with GuiceOneServerPerSuite {
     }
 
     lazy val defaultCookie = {
-      val loginCookies = Await.result(wsClient.url(login).post("me").map(p => p.headers.get("Set-Cookie").map(_.head.split(";").head)), 1 seconds)
+      val loginCookies = Await.result(wsClient.url(login).post("me")
+        .map(p => p.headers.get("Set-Cookie").map(
+          _.head.split(";").head)), 1 seconds)
       val play_session = loginCookies.get.split("=").tail.mkString("")
 
       DefaultWSCookie("PLAY_SESSION", play_session)
     }
 
     "list all the products in a cart" in {
-      val response = wsClient.url(productsInCartURL).addCookies(defaultCookie).get().futureValue
+      val response = wsClient.url(productsInCartURL)
+        .addCookies(defaultCookie).get().futureValue
       println(response)
       response.status mustBe OK
 
       val listOfProduct = decode[Seq[Cart]](response.body)
       listOfProduct.right.get mustBe empty
     }
-    "add product in the cart" in {
+
+    "add a product in the cart" in {
       val productID = "ALD1"
       val quantity = 1
-      val posted = wsClient.url(actionProductInCartURL(productID, quantity)).addCookies(defaultCookie).post("").futureValue
+      val posted = wsClient.url(actionProductInCartURL(productID, quantity))
+        .addCookies(defaultCookie).post("").futureValue
       posted.status mustBe OK
 
-      val response = wsClient.url(productsInCartURL).addCookies(defaultCookie).get().futureValue
+      val response = wsClient.url(productsInCartURL)
+        .addCookies(defaultCookie).get().futureValue
       println(response)
       response.status mustBe OK
       response.body must include("ALD1")
     }
-    "delete product in the cart" in {
+
+    "delete a product from the cart" in {
       val productID = "ALD1"
-      val posted = wsClient.url(deleteProductInCartURL(productID)).addCookies(defaultCookie).delete().futureValue
+      val posted = wsClient.url(deleteProductInCartURL(productID))
+        .addCookies(defaultCookie).delete().futureValue
       posted.status mustBe OK
 
-      val response = wsClient.url(productsInCartURL).addCookies(defaultCookie).get().futureValue
+      val response = wsClient.url(productsInCartURL)
+        .addCookies(defaultCookie).get().futureValue
       println(response)
       response.status mustBe OK
       response.body mustNot include("ALD1")
     }
-    "update product quantity in the cart" in {
+
+    "update a product quantity in the cart" in {
       val productID = "ALD1"
       val quantity = 1
-      val posted = wsClient.url(actionProductInCartURL(productID, quantity)).addCookies(defaultCookie).post("").futureValue
+      val posted = wsClient.url(actionProductInCartURL(productID, quantity))
+        .addCookies(defaultCookie).post("").futureValue
       posted.status mustBe OK
 
       val newQuantity = 99
-      val update = wsClient.url(actionProductInCartURL(productID, newQuantity)).addCookies(defaultCookie).put("").futureValue
+      val update = wsClient.url(actionProductInCartURL(productID, newQuantity))
+        .addCookies(defaultCookie).put("").futureValue
       update.status mustBe OK
 
-      val response = wsClient.url(productsInCartURL).addCookies(defaultCookie).get().futureValue
+      val response = wsClient.url(productsInCartURL)
+        .addCookies(defaultCookie).get().futureValue
       println(response)
       response.status mustBe OK
       response.body must include(productID)
       response.body must include(newQuantity.toString)
     }
 
-    "return a cookie when a user login" in {
-      val cookieFuture = wsClient.url(login).post("myID").map { response =>
-        response.headers.get("Set-Cookie").map(header =>
-          header.head.split(";").filter(_.startsWith("PLAY_SESSION")).head
-        )
+    "return a cookie when a user logins" in {
+      val cookieFuture = wsClient.url(login).post("myID").map {
+        response =>
+          response.headers.get("Set-Cookie").map(
+            header => header.head.split(";")
+              .filter(_.startsWith("PLAY_SESSION")).head)
       }
 
       val play_session_Key = cookieFuture.futureValue.get.split("=").head
