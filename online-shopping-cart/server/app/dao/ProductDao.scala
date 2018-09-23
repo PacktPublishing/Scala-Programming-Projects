@@ -1,9 +1,8 @@
 package dao
 
-import javax.inject.Inject
-
 import io.fscala.shopping.shared
 import io.fscala.shopping.shared.{Cart, Product, ProductInCart}
+import javax.inject.Inject
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -45,7 +44,9 @@ class CartDao @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(
   def remove(cart: ProductInCart): Future[Int] = db.run(carts.filter(c => c.user === cart.user && c.productCode === cart.productCode).delete)
 
   def update(cart: Cart): Future[Int] = {
-    val q = for {c <- carts if c.user === cart.user && c.productCode === cart.productCode} yield c.quantity
+    val q = for {
+      c <- carts if c.user === cart.user && c.productCode === cart.productCode
+    } yield c.quantity
     db.run(q.update(cart.quantity))
   }
 
