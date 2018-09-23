@@ -15,7 +15,7 @@ import scala.concurrent.duration.DurationInt
 class APISpec extends PlaySpec with ScalaFutures with GuiceOneServerPerSuite {
 
   implicit val defaultPatience =
-    PatienceConfig(timeout = Span(1, Seconds), interval = Span(100, Millis))
+    PatienceConfig(timeout = Span(3, Seconds), interval = Span(100, Millis))
 
   val baseURL = s"localhost:$port/v1"
   val productsURL = s"http://$baseURL/products"
@@ -38,7 +38,7 @@ class APISpec extends PlaySpec with ScalaFutures with GuiceOneServerPerSuite {
       val response = wsClient.url(productsURL).get().futureValue
       println(response.body)
       response.status mustBe OK
-      response.body must include("PEPER")
+      response.body must include("PEPPER")
       response.body must include("NAO")
       response.body must include("BEOBOT")
 

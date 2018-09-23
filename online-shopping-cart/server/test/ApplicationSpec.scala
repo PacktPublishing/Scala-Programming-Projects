@@ -29,7 +29,6 @@ class ApplicationSpec extends PlaySpec with ScalaFutures with GuiceOneServerPerS
       whenReady(wsClient.url(testURL).get(), Timeout(1 second)) { response =>
         response.status mustBe OK
         response.contentType should include("text/html")
-        response.body should include("shouts out")
       }
     }
   }
