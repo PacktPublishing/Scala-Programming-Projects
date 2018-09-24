@@ -29,4 +29,4 @@ target := file("/tmp/sbt/bitcoin-analyser")
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 test in assembly := {}
-mainClass in assembly := Some("coinyser.BatchProducerApp")
+mainClass in assembly := Some("coinyser.BatchProducerAppSpark")

@@ -34,4 +34,4 @@ class BatchProducerApp extends IOApp with StrictLogging {
 
 }
 
-object BatchProducerApp extends BatchProducerApp
+object BatchProducerAppSpark extends BatchProducerApp
