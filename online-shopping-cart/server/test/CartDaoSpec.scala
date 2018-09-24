@@ -16,10 +16,8 @@ class CartDaoSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite {
     val app2dao = Application.instanceCache[CartDao]
     "be empty on database creation" in {
       val dao: CartDao = app2dao(app)
-      val expected = Set.empty[Cart]
 
-      dao.all().futureValue should contain theSameElementsAs (expected)
-
+      dao.all().futureValue shouldBe empty
     }
 
     "accept to add new cart" in {
@@ -33,12 +31,13 @@ class CartDaoSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite {
       val noise = Set(
         Cart("userNoise", "ALD2", 10)
       )
+      val allCarts = expected ++ noise
 
-      val insertFutures = noise.map(dao.insert(_)) ++ expected.map(dao.insert(_))
+      val insertFutures = allCarts.map(dao.insert)
 
       whenReady(Future.sequence(insertFutures)) { _ =>
-        dao.cart4(user).futureValue should contain theSameElementsAs (expected)
-        dao.all().futureValue.size should equal(expected ++ noise size)
+        dao.cart4(user).futureValue should contain theSameElementsAs expected
+        dao.all().futureValue.size should equal(allCarts.size)
       }
     }
     "error thrown when adding a cart with same user and productCode" in {
@@ -52,8 +51,10 @@ class CartDaoSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite {
       val noise = Set(
         Cart(user, "ALD1", 10)
       )
+      val allCarts = expected ++ noise
 
-      val insertFutures = expected.map(dao.insert(_)) ++ noise.map(dao.insert(_))
+
+      val insertFutures = allCarts.map(dao.insert)
 
       recoverToSucceededIf[org.h2.jdbc.JdbcSQLException]{
         Future.sequence(insertFutures)

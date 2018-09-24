@@ -1,7 +1,7 @@
 package dao
 
 import io.fscala.shopping.shared
-import io.fscala.shopping.shared.{Cart, Product, ProductInCart}
+import io.fscala.shopping.shared.{Cart, CartKey, Product, ProductInCart}
 import javax.inject.Inject
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
@@ -39,15 +39,19 @@ class CartDao @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(
 
   def cart4(usr: String): Future[Seq[Cart]] = db.run(carts.filter(_.user === usr).result)
 
-  def insert(cart: Cart): Future[Unit] = db.run(carts += cart).map { _ => () }
+  def insert(cart: Cart): Future[_] = db.run(carts += cart)
 
-  def remove(cart: ProductInCart): Future[Int] = db.run(carts.filter(c => c.user === cart.user && c.productCode === cart.productCode).delete)
+  def remove(cart: ProductInCart): Future[Int] = db.run(carts.filter(c => matchKey(c, cart)).delete)
 
   def update(cart: Cart): Future[Int] = {
     val q = for {
-      c <- carts if c.user === cart.user && c.productCode === cart.productCode
+      c <- carts if matchKey(c, cart)
     } yield c.quantity
     db.run(q.update(cart.quantity))
+  }
+
+  private def matchKey(c: CartTable, cart: CartKey): Rep[Boolean] = {
+    c.user === cart.user && c.productCode === cart.productCode
   }
 
   def all(): Future[Seq[Cart]] = db.run(carts.result)
