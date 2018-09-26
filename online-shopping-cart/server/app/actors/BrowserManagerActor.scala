@@ -17,13 +17,13 @@ object BrowserManagerActor {
 
 private class BrowserManagerActor() extends Actor with ActorLogging {
 
-  var browsers: ListBuffer[ActorRef] = ListBuffer.empty[ActorRef]
+  val browsers: ListBuffer[ActorRef] = ListBuffer.empty[ActorRef]
 
   def receive: Receive = {
 
     case AddBrowser(b) =>
       context.watch(b)
-      browsers = browsers :+ b
+      browsers += b
       log.info("websocket {} added", b.path)
 
     case CartEvent(user, product, action) =>

@@ -138,7 +138,9 @@ object UIManager {
 
   private def quantity(productCode: String) = Try {
     val inputText = $(s"#cart-$productCode-qty")
-    if (inputText.length != 0) Integer.parseInt(inputText.`val`().asInstanceOf[String]) else 1
+    if (inputText.length != 0)
+      Integer.parseInt(inputText.`val`().asInstanceOf[String])
+    else 1
   }.getOrElse(1)
 
   private def postInCart(productCode: String, quantity: Int, onDone: () => Unit) = {
