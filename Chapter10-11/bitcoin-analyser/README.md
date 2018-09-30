@@ -31,7 +31,7 @@ Run Zeppelin:
 ```
 cd C:\opt\zeppelin-0.7.3-bin-all\bin
 zeppelin.cmd
-
+```
 
 ### Linux / MacOs
 We will install all tools in /opt. Feel free to use a different folder if you prefer.
