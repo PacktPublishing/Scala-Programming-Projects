@@ -44,7 +44,8 @@ bin/zeppelin-daemon.sh start
 ```
 
 ### Post-installation steps (all platforms)
-With your browser, go to http://localhost:8080 then click on the top right button -> Interpreter -> Spark -> Edit -> Dependencies 
+With your browser, go to http://localhost:8080 then click on the top right button -> Interpreter -> Spark -> Edit -> Dependencies
+
 Add the following dependencies:
 - org.apache.spark:spark-streaming-kafka-0-10_2.11:jar:2.1.0
 - org.apache.kafka:kafka-clients:jar:0.10.2.2
