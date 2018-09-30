@@ -55,33 +55,32 @@ Add the following dependencies:
 - Download Kafka 1.1.1 https://www.apache.org/dyn/closer.cgi?path=/kafka/1.1.1/kafka_2.11-1.1.1.tgz
 
 ### Windows
-Extract kafka_2.11-1.1.1.tgz to C:\opt\kafka_2.11-1.1.1
-Start a Zookeeper in a command prompt:
+- Extract kafka_2.11-1.1.1.tgz to C:\opt\kafka_2.11-1.1.1
+- Start a Zookeeper in a command prompt:
 ```
 cd C:\opt\kafka_2.11-1.1.1\bin\windows
 zookeeper-server-start.bat ..\..\config\zookeeper.properties
 ```
-Start Kafka in another command prompt:
+- Start Kafka in another command prompt:
 ```
 cd C:\opt\kafka_2.11-1.1.1\bin\windows
 kafka-server-start.bat ..\..\config\server.properties
 ```
-
-Start a console consumer in another command prompt:
+- Start a console consumer in another command prompt:
 ```
 cd C:\opt\kafka_2.11-1.1.1\bin\windows
 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transactions --from-beginning
 ```
 
 ### Linux / MacOs
-Extract kafka_2.11-1.1.1.tgz to /opt/kafka_2.11-1.1.1
-Start Zookeeper and Kafka in a terminal:
+- Extract kafka_2.11-1.1.1.tgz to /opt/kafka_2.11-1.1.1
+- Start Zookeeper and Kafka in a terminal:
 ```
 cd /opt/kafka_2.11-1.1.1
 bin/zookeeper-server-start.sh config/zookeeper.properties &
 bin/kafka-server-start.sh config/server.properties &
 ```
-Start a console consumer in another terminal:
+- Start a console consumer in another terminal:
 ```
 cd /opt/kafka_2.11-1.1.1
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transactions --from-beginning
@@ -89,6 +88,7 @@ bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transact
 
 # Running the Batch Producer
 This will write the last day of transactions from midnight to the data directory, then write new transactions every hour.
+
 Go to the project directory and run BatchProducerAppIntelliJ:
 ```
 cd Scala-Programming-Projects/Chapter10-11/bitcoin-analyser
