@@ -36,6 +36,8 @@ If you are an amateur programmer who wishes to learn how to use Scala, this book
 
 With the following software and hardware list you can run all code files present in the book (Chapter 1-11).
 ### Software and Hardware List
+| Chapter | Software required | OS required |
+| -------- | ------------------------------------ | ----------------------------------- |
 | Chapter | Software required | Hardware required |
 | 1-11 | IntelliJ Idea 2018.2.4 | 2 GB RAM minimum, 4 GB RAM recommended, 1.5 GB hard disk space + at least 1 GB for caches, 1024x768 minimum screen resolution|
 |6-9|Heroku CLI 7.16.0|A system  with 4 GB RAM|
