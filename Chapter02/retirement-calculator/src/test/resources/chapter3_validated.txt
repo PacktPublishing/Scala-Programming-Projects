@@ -1,0 +1,23 @@
+We are now ... further. We are going to improve the SimulatePlanApp to give the users more information if one or many arguments passed to the program are wrong.
+When many arguments are wrong, for instance if the user passes some text instead of an Int, we want to report one error for every bad argument.
+
+Firstly, we need to change the test associated with SimulatePlanApp. Open SimulatePlanAppIT.scala and change as follows:
+<paste code>
+
+(bullet points)
+The first two tests do not change much. We just changed the expectation to be a Valid(expectedResult). We are indeed going to change the return type of SimulatePlanApp.strMain: instead of returning a String, we are going to change it to return a Validated[String, String]. We expect strMain to return a Valid value containing the result if all arguments are correct. If some arguments are incorrect, it should return an Invalid value containing a String explaining what are the incorrect arguments(s).
+The third test is a new test. If we do not pass the right number of arguments, we expect strMain to return an Invalid value containng an usage example.
+The fourth test checks that one error for every bad argument is reported.
+
+The next step is to change strMain to validate the arguments. For this, we start by writing a smaller function that parses one String argument to produce an Int:
+<paste code, with ValidatedNel as a return type>
+We call the method catchOnly on Validated, which executes a block of code (in our case value.toInt) and catches a specific type of exception. If the block does not throw any exception, catchOnly returns a Valid value with the result. If the block throws the exception type passed as argument, catchOnly returns an Invalid value containing the exception. In our function we obtain a Validated[NumberFormatException, Int]. However our function parseInt must return a ValidatedNel[RetCalcError, Int]. In order to transform the error or "left" type, we call leftMap to produce a NonEmptyList[RetCalcError].
+
+
+
+
+TODO talk about best way to read the book:
+1. Read without trying any of the examples
+2. Retype the examples. Better: get familiar with the environment, see how the autocomplete works, learn by making a few mistakes
+3. Remake the examples without looking at the book
+4. Implement extra features

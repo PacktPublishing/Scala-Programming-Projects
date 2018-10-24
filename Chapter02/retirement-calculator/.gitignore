@@ -1,0 +1,8 @@
+*.odt
+*.tex
+*.log
+target/
+.ensime
+.ensime_cache
+.~lock*
+.idea
