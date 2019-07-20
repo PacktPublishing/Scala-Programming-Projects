@@ -17,7 +17,7 @@ class IntegrationSpec extends PlaySpec with GuiceOneServerPerSuite {
 
       val response = Await.result(wsClient.url(testURL).get(), 1 seconds)
 
-      response.body should include ("shouts out")
+      response.body should include ("<title>Shopping Page</title>")
     }
   }
 }
